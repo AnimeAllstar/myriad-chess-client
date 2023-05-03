@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import { Chess, PieceSymbol, Square } from 'chess.js'
 import { cloneDeep } from 'lodash'
+import { RANDOM_AI_URL } from '@myriad-chess/constants'
+import { ApiResponse, Outcome, Reason, ReasonString, Winner } from '@myriad-chess/types/api'
 
 // Move object with only the necessary properties for game.move()
 interface ShortMove {
@@ -15,11 +17,22 @@ const Home = () => {
   const [game, setGame] = useState(new Chess())
   // whether it's the AI's turn
   const [aiTurn, setAiTurn] = useState(false)
+  // outcome of the game
+  const [outcome, setOutcome] = useState<Outcome | null>(null)
+
+  const printOutcome = (reason: Reason, winner: Winner) => {
+    if (reason === Reason.CHECKMATE) {
+      const winnerString = winner === null ? 'DRAW' : winner ? 'WHITE' : 'BLACK'
+      console.log(`${winnerString} wins by checkmate`)
+    } else {
+      console.log(`DRAW by ${ReasonString[reason]}`)
+    }
+  }
 
   // make a move, if the move is illegal, return false
   // if the move is legal, update the game state, set aiTurn to true and return true
   const makeAMove = useCallback(
-    (move: ShortMove) => {
+    (move: ShortMove | string) => {
       const gameCopy = cloneDeep(game)
       try {
         gameCopy.move(move)
@@ -37,30 +50,33 @@ const Home = () => {
 
   // make a random move from the list of possible moves
   // set aiTurn to false after the move is made
-  const aiMove = useCallback(() => {
-    const possibleMoves = game.moves({ verbose: true })
-    const randomIndex = Math.floor(Math.random() * possibleMoves.length)
-    makeAMove(possibleMoves[randomIndex])
-    setAiTurn(false)
+  const aiMove = useCallback(async () => {
+    const response = await fetch(RANDOM_AI_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        fen: game.fen()
+      })
+    })
+    const { fen, outcome, move }: ApiResponse = await response.json()
+    if (outcome) {
+      setOutcome(outcome)
+      printOutcome(outcome.termination, outcome.winner)
+      return
+    } else if (move) {
+      makeAMove(move)
+      setAiTurn(false)
+    }
   }, [game, makeAMove])
 
-  // make the AI move if it's the AI's turn and the game is not over
+  // make the AI move if it's the AI's turn and the game is not over (outcome is not null)
   useEffect(() => {
-    if (!aiTurn) return
-    if (game.isGameOver()) {
-      if (game.isCheckmate()) {
-        const winner = game.turn() === 'w' ? 'Black' : 'White'
-        console.log(`Checkmate! ${winner} wins!`)
-      } else if (game.isDraw()) {
-        console.log('Draw!')
-      } else {
-        console.log('Stalemate / 3-fold repetition!')
-      }
-      return
-    }
+    if (!aiTurn || outcome) return
     const interval = setInterval(() => aiMove(), 200)
     return () => clearInterval(interval)
-  }, [game, aiMove, aiTurn])
+  }, [game, aiMove, aiTurn, outcome])
 
   // make the user's move when a piece is dropped
   const onDrop = (sourceSquare: Square, targetSquare: Square) => {
