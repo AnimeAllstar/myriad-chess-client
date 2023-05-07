@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import { Chess, PieceSymbol, Square } from 'chess.js'
 import { cloneDeep } from 'lodash'
-import { RANDOM_AI_URL } from '@myriad-chess/constants'
+import { MINMAX_AI_URL } from '@myriad-chess/constants'
 import { ApiResponse, Outcome, Reason, ReasonString, Winner } from '@myriad-chess/types/api'
 
 // Move object with only the necessary properties for game.move()
@@ -51,7 +51,7 @@ const Home = () => {
   // make a random move from the list of possible moves
   // set aiTurn to false after the move is made
   const aiMove = useCallback(async () => {
-    const response = await fetch(RANDOM_AI_URL, {
+    const response = await fetch(MINMAX_AI_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -74,8 +74,7 @@ const Home = () => {
   // make the AI move if it's the AI's turn and the game is not over (outcome is not null)
   useEffect(() => {
     if (!aiTurn || outcome) return
-    const interval = setInterval(() => aiMove(), 200)
-    return () => clearInterval(interval)
+    aiMove().catch(console.error)
   }, [game, aiMove, aiTurn, outcome])
 
   // make the user's move when a piece is dropped
