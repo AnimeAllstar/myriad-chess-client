@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import { Chess, PieceSymbol, Square } from 'chess.js'
 import { cloneDeep } from 'lodash'
-import { MINMAX_AI_URL } from '@myriad-chess/constants'
+import { MINIMAX_AI_URL } from '@myriad-chess/constants'
 import { ApiResponse, Outcome, Reason, ReasonString, Winner } from '@myriad-chess/types/api'
 
 // Move object with only the necessary properties for game.move()
@@ -51,7 +51,7 @@ const Home = () => {
   // make a random move from the list of possible moves
   // set aiTurn to false after the move is made
   const aiMove = useCallback(async () => {
-    const response = await fetch(MINMAX_AI_URL, {
+    const response = await fetch(MINIMAX_AI_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
