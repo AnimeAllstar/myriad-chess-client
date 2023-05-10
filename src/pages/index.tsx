@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Chessboard } from 'react-chessboard'
-import { Chess, PieceSymbol, Square } from 'chess.js'
-import { cloneDeep } from 'lodash'
+import CustomTab from '@myriad-chess/components/CustomTab'
 import { MINIMAX_AI_URL } from '@myriad-chess/constants'
 import { ApiResponse, Outcome, Reason, ReasonString, Winner } from '@myriad-chess/types/api'
+import { Chess, PieceSymbol, Square } from 'chess.js'
+import { cloneDeep } from 'lodash'
+import { useCallback, useEffect, useState } from 'react'
+import { Chessboard } from 'react-chessboard'
 
 // Move object with only the necessary properties for game.move()
 interface ShortMove {
@@ -87,12 +88,27 @@ const Home = () => {
   }
 
   return (
-    <Chessboard
-      position={game.fen()}
-      onPieceDrop={onDrop}
-      arePiecesDraggable={!game.isGameOver() && !aiTurn}
-      boardWidth={720}
-    />
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap',
+      maxHeight: '100vh', maxWidth: '99vw', padding: '8px'
+    }}
+    >
+
+      <Chessboard
+        position={game.fen()}
+        onPieceDrop={onDrop}
+        arePiecesDraggable={!game.isGameOver() && !aiTurn}
+        boardWidth={720}
+      />
+
+      <div style={{ flexGrow: 1, marginLeft: '22px' }}>
+        <CustomTab
+          title1={'AI vs AI'}
+          title2={'Human vs AI'}
+        />
+      </div>
+
+    </div>
   )
 }
 
