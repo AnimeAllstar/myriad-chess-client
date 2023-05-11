@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useGameState } from '@myriad-chess/components/GameStateProvider'
+import React from 'react';
 import { NavDropdown, Navbar } from 'react-bootstrap';
 
 interface SelectorProps {
@@ -8,9 +9,11 @@ interface SelectorProps {
 
 const Selector: React.FC<SelectorProps> = ({ hasAI1, hasAI2 }) => {
 
-    const [Ai1, setAi1] = useState({ color: 'white', model: 'minimax' });
-    const [Ai2, setAi2] = useState({ color: 'black', model: 'minimax' });
-    const [player, setPlayer] = useState({ color: 'white' });
+    const {
+        Ai1, setAi1,
+        Ai2, setAi2,
+        player, setPlayer,
+    } = useGameState();
 
     return (
         <div

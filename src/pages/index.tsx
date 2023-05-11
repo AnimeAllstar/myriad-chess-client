@@ -5,6 +5,7 @@ import { Chess, PieceSymbol, Square } from 'chess.js'
 import { cloneDeep } from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
+import { useGameState } from '@myriad-chess/components/GameStateProvider'
 
 // Move object with only the necessary properties for game.move()
 interface ShortMove {
@@ -20,8 +21,8 @@ const Home = () => {
   const [aiTurn, setAiTurn] = useState(false)
   // outcome of the game
   const [outcome, setOutcome] = useState<Outcome | null>(null)
-  // game mode
-  const [gameMode, setGameMode] = useState<"ai_vs_ai" | "human_vs_ai">("ai_vs_ai");
+  // game mode and startState
+  const { gameMode, setGameMode, gameStarted } = useGameState();
 
 
   const printOutcome = (reason: Reason, winner: Winner) => {
@@ -97,28 +98,27 @@ const Home = () => {
   return (
     <div style={{
       display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap',
-      maxHeight: '100vh', maxWidth: '99vw', padding: '8px'
+      maxHeight: '100vh', maxWidth: '99vw', padding: '8px',
     }}
     >
+        <div style={{ pointerEvents: gameStarted ? 'auto' : 'none' }}>
+          <Chessboard
+            position={game.fen()}
+            onPieceDrop={onDrop}
+            arePiecesDraggable={!game.isGameOver() && !aiTurn}
+            boardWidth={720}
+          />
+        </div>
 
-      <Chessboard
-        position={game.fen()}
-        onPieceDrop={onDrop}
-        arePiecesDraggable={!game.isGameOver() && !aiTurn}
-        boardWidth={720}
-      />
-
-      <div style={{ flexGrow: 1, marginLeft: '22px' }}>
-        <CustomTab
-          title1={"AI vs AI"}
-          title2={"Human vs AI"}
-          onChange={(selectedIndex: number) => {
-            setGameMode(selectedIndex === 0 ? "ai_vs_ai" : "human_vs_ai");
-          }}
-          onPlay={() => { (gameMode === "ai_vs_ai") && setAiTurn(true) }}
-        />
-      </div>
-
+        <div style={{ flexGrow: 1, marginLeft: '22px' }}>
+          <CustomTab
+            title1={"AI vs AI"}
+            title2={"Human vs AI"}
+            setTurn={setAiTurn}
+            onClickTitle1={() => { setGameMode('ai_vs_ai'); }}
+            onClickTitle2={() => { setGameMode('human_vs_ai'); }}
+          />
+        </div>
     </div>
   )
 }
