@@ -9,7 +9,6 @@ interface CustomTabProps {
   content2?: ReactNode;
 }
 
-// TODO: play button
 const CustomTab: React.FC<CustomTabProps> = ({ title1, title2, content1, content2 }) => {
 
   return (
