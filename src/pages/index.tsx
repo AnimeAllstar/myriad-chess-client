@@ -20,6 +20,9 @@ const Home = () => {
   const [aiTurn, setAiTurn] = useState(false)
   // outcome of the game
   const [outcome, setOutcome] = useState<Outcome | null>(null)
+  // game mode
+  const [gameMode, setGameMode] = useState<"ai_vs_ai" | "human_vs_ai">("ai_vs_ai");
+
 
   const printOutcome = (reason: Reason, winner: Winner) => {
     if (reason === Reason.CHECKMATE) {
@@ -68,15 +71,19 @@ const Home = () => {
       return
     } else if (move) {
       makeAMove(move)
-      setAiTurn(false)
+      // continue moving if ai_vs_ai
+      setAiTurn(false || gameMode === "ai_vs_ai")
     }
   }, [game, makeAMove])
 
   // make the AI move if it's the AI's turn and the game is not over (outcome is not null)
+  // continue moving if ai_vs_ai
   useEffect(() => {
-    if (!aiTurn || outcome) return
-    aiMove().catch(console.error)
-  }, [game, aiMove, aiTurn, outcome])
+    if (!aiTurn || outcome) return;
+    if (gameMode === "ai_vs_ai" || (gameMode === "human_vs_ai" && aiTurn)) {
+      aiMove().catch(console.error);
+    }
+  }, [game, aiMove, aiTurn, outcome, gameMode]);
 
   // make the user's move when a piece is dropped
   const onDrop = (sourceSquare: Square, targetSquare: Square) => {
@@ -103,8 +110,12 @@ const Home = () => {
 
       <div style={{ flexGrow: 1, marginLeft: '22px' }}>
         <CustomTab
-          title1={'AI vs AI'}
-          title2={'Human vs AI'}
+          title1={"AI vs AI"}
+          title2={"Human vs AI"}
+          onChange={(selectedIndex: number) => {
+            setGameMode(selectedIndex === 0 ? "ai_vs_ai" : "human_vs_ai");
+          }}
+          onPlay={() => { (gameMode === "ai_vs_ai") && setAiTurn(true) }}
         />
       </div>
 

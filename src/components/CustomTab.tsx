@@ -7,9 +7,15 @@ interface CustomTabProps {
   title2?: string;
   content1?: ReactNode;
   content2?: ReactNode;
+  onChange?: (selectedIndex: number) => void;
+  onPlay?: () => void;
 }
 
-const CustomTab: React.FC<CustomTabProps> = ({ title1, title2, content1, content2 }) => {
+const CustomTab: React.FC<CustomTabProps> = ({
+  title1, title2,
+  content1, content2,
+  onChange, onPlay
+}) => {
 
   return (
     <Tab.Container id="left-right-tab" defaultActiveKey="first">
@@ -43,19 +49,25 @@ const CustomTab: React.FC<CustomTabProps> = ({ title1, title2, content1, content
         <Row>
           <Tab.Content>
             <Tab.Pane eventKey="first" className="">
-              {content1 || (<Selector hasAI1={true} hasAI2={true}/>)}
+              {content1 || (<Selector hasAI1={true} hasAI2={true} />)}
             </Tab.Pane>
             <Tab.Pane eventKey="second" className="">
-              {content2 || (<Selector hasAI1={false} hasAI2={true}/>)}
+              {content2 || (<Selector hasAI1={false} hasAI2={true} />)}
             </Tab.Pane>
           </Tab.Content>
         </Row>
 
         <Row>
-          <Button variant="primary" onClick={()=>{alert('start')}}>
+          <Button
+            variant="primary"
+            onClick={() => {
+              onPlay?.();
+            }}
+          >
             PLAY
           </Button>
         </Row>
+
       </Col>
     </Tab.Container>
   );

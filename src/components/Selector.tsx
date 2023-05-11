@@ -8,8 +8,8 @@ interface SelectorProps {
 
 const Selector: React.FC<SelectorProps> = ({ hasAI1, hasAI2 }) => {
 
-    const [Ai1, setAi1] = useState({ color: 'white', model: 'random' });
-    const [Ai2, setAi2] = useState({ color: 'black', model: 'random' });
+    const [Ai1, setAi1] = useState({ color: 'white', model: 'minimax' });
+    const [Ai2, setAi2] = useState({ color: 'black', model: 'minimax' });
     const [player, setPlayer] = useState({ color: 'white' });
 
     return (
@@ -62,10 +62,10 @@ const Selector: React.FC<SelectorProps> = ({ hasAI1, hasAI2 }) => {
                 }} title="AI 1 MODEL" id="nav-left-model-dropdown1">
                     <NavDropdown.Item eventKey="model-rand1"
                         onClick={() => {
-                            setAi1({ ...Ai1, model: 'random' });
+                            setAi1({ ...Ai1, model: 'minimax' });
                         }}
                     >
-                        random
+                        minimax
                     </NavDropdown.Item>
                 </NavDropdown></>}
 
@@ -120,10 +120,10 @@ const Selector: React.FC<SelectorProps> = ({ hasAI1, hasAI2 }) => {
                 }} title="AI 2 MODEL" id="nav-left-model-dropdown2">
                     <NavDropdown.Item eventKey="model-rand2"
                         onClick={() => {
-                            setAi2({ ...Ai2, model: 'random' });
+                            setAi2({ ...Ai2, model: 'minimax' });
                         }}
                     >
-                        random
+                        minimax
                     </NavDropdown.Item>
                 </NavDropdown></>}
         </div>
