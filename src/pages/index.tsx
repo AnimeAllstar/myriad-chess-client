@@ -24,7 +24,7 @@ const Home = () => {
   // outcome of the game
   const [outcome, setOutcome] = useState<Outcome | null>(null)
   // game mode and startState
-  const { gameMode, setGameMode, gameStarted, Ai1, Ai2 } = useGameState()
+  const { gameMode, setGameMode, gameStarted, Ai1, Ai2, player } = useGameState()
 
   const printOutcome = (reason: Reason, winner: Winner) => {
     if (reason === Reason.CHECKMATE) {
@@ -126,6 +126,7 @@ const Home = () => {
           onPieceDrop={onDrop}
           arePiecesDraggable={!game.isGameOver() && !aiTurn}
           boardWidth={720}
+          boardOrientation={gameMode === 'human_vs_ai' && player.color === 'black' ? 'black' : 'white'}
         />
       </div>
 
