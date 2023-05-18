@@ -30,8 +30,10 @@ const Home = () => {
     if (reason === Reason.CHECKMATE) {
       const winnerString = winner === null ? 'DRAW' : winner ? 'WHITE' : 'BLACK'
       console.log(`${winnerString} wins by checkmate`)
+      alert(`${winnerString} wins by checkmate`)
     } else {
       console.log(`DRAW by ${ReasonString[reason]}`)
+      alert(`DRAW by ${ReasonString[reason]}`)
     }
   }
 
