@@ -58,28 +58,32 @@ const Home = () => {
   // set aiTurn to false after the move is made
   const aiMove = useCallback(
     async (URL: string) => {
-      const response = await fetch(URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          fen: game.fen()
+      try {
+        const response = await fetch(URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            fen: game.fen()
+          })
         })
-      })
-      const { fen, outcome, move }: ApiResponse = await response.json()
-      if (outcome) {
-        setOutcome(outcome)
-        printOutcome(outcome.termination, outcome.winner)
-        return
-      } else if (move) {
-        setWTurn(!wTurn)
-        makeAMove(move)
-        // continue moving if ai_vs_ai
-        setAiTurn(false || gameMode === 'ai_vs_ai')
+        const { fen, outcome, move }: ApiResponse = await response.json()
+        if (outcome) {
+          setOutcome(outcome)
+          printOutcome(outcome.termination, outcome.winner)
+          return
+        } else if (move) {
+          setWTurn(!wTurn)
+          makeAMove(move)
+          // continue moving if ai_vs_ai
+          setAiTurn(gameMode === 'ai_vs_ai')
+        }
+      } catch (error) {
+        console.log(error)
       }
     },
-    [game, makeAMove]
+    [game, gameMode, makeAMove, wTurn]
   )
 
   // make the AI move if it's the AI's turn and the game is not over (outcome is not null)
@@ -98,7 +102,7 @@ const Home = () => {
     } else if (gameMode === 'ai_vs_ai' || (gameMode === 'human_vs_ai' && aiTurn)) {
       aiMove(URL).catch(console.error)
     }
-  }, [game, aiMove, aiTurn, outcome, gameMode, wTurn])
+  }, [game, aiMove, aiTurn, outcome, gameMode, wTurn, Ai2.color, Ai2.url, Ai1.url])
 
   // make the user's move when a piece is dropped
   const onDrop = (sourceSquare: Square, targetSquare: Square) => {
