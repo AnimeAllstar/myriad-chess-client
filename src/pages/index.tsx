@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Chessboard } from 'react-chessboard'
+import CustomTab from '@myriad-chess/components/CustomTab'
+import { useGameState } from '@myriad-chess/components/GameStateProvider'
+import { RANDOM_AI_URL } from '@myriad-chess/constants'
+import { ApiResponse, Outcome, Reason, ReasonString, Winner } from '@myriad-chess/types/api'
 import { Chess, PieceSymbol, Square } from 'chess.js'
 import { cloneDeep } from 'lodash'
-import { MINIMAX_AI_URL } from '@myriad-chess/constants'
-import { ApiResponse, Outcome, Reason, ReasonString, Winner } from '@myriad-chess/types/api'
+import { useCallback, useEffect, useState } from 'react'
+import { Chessboard } from 'react-chessboard'
 
 // Move object with only the necessary properties for game.move()
 interface ShortMove {
@@ -17,15 +19,21 @@ const Home = () => {
   const [game, setGame] = useState(new Chess())
   // whether it's the AI's turn
   const [aiTurn, setAiTurn] = useState(false)
+  // whether it's the white's turn
+  const [wTurn, setWTurn] = useState(true)
   // outcome of the game
   const [outcome, setOutcome] = useState<Outcome | null>(null)
+  // game mode and startState
+  const { gameMode, setGameMode, gameStarted, Ai1, Ai2, player } = useGameState()
 
   const printOutcome = (reason: Reason, winner: Winner) => {
     if (reason === Reason.CHECKMATE) {
       const winnerString = winner === null ? 'DRAW' : winner ? 'WHITE' : 'BLACK'
       console.log(`${winnerString} wins by checkmate`)
+      alert(`${winnerString} wins by checkmate`)
     } else {
       console.log(`DRAW by ${ReasonString[reason]}`)
+      alert(`DRAW by ${ReasonString[reason]}`)
     }
   }
 
@@ -50,32 +58,53 @@ const Home = () => {
 
   // make a random move from the list of possible moves
   // set aiTurn to false after the move is made
-  const aiMove = useCallback(async () => {
-    const response = await fetch(MINIMAX_AI_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        fen: game.fen()
-      })
-    })
-    const { fen, outcome, move }: ApiResponse = await response.json()
-    if (outcome) {
-      setOutcome(outcome)
-      printOutcome(outcome.termination, outcome.winner)
-      return
-    } else if (move) {
-      makeAMove(move)
-      setAiTurn(false)
-    }
-  }, [game, makeAMove])
+  const aiMove = useCallback(
+    async (URL: string) => {
+      try {
+        const response = await fetch(URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            fen: game.fen()
+          })
+        })
+        const { fen, outcome, move }: ApiResponse = await response.json()
+        if (outcome) {
+          setOutcome(outcome)
+          printOutcome(outcome.termination, outcome.winner)
+          return
+        } else if (move) {
+          setWTurn(!wTurn)
+          makeAMove(move)
+          // continue moving if ai_vs_ai
+          setAiTurn(gameMode === 'ai_vs_ai')
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    [game, gameMode, makeAMove, wTurn]
+  )
 
   // make the AI move if it's the AI's turn and the game is not over (outcome is not null)
+  // continue moving if ai_vs_ai
   useEffect(() => {
+    const URL =
+      gameMode === 'human_vs_ai' || (wTurn && Ai2.color === 'white') || (!wTurn && Ai2.color === 'black')
+        ? Ai2.url
+        : Ai1.url
+
     if (!aiTurn || outcome) return
-    aiMove().catch(console.error)
-  }, [game, aiMove, aiTurn, outcome])
+
+    if (URL === RANDOM_AI_URL) {
+      const interval = setInterval(() => aiMove(URL), 200)
+      return () => clearInterval(interval)
+    } else if (gameMode === 'ai_vs_ai' || (gameMode === 'human_vs_ai' && aiTurn)) {
+      aiMove(URL).catch(console.error)
+    }
+  }, [game, aiMove, aiTurn, outcome, gameMode, wTurn, Ai2.color, Ai2.url, Ai1.url])
 
   // make the user's move when a piece is dropped
   const onDrop = (sourceSquare: Square, targetSquare: Square) => {
@@ -87,12 +116,40 @@ const Home = () => {
   }
 
   return (
-    <Chessboard
-      position={game.fen()}
-      onPieceDrop={onDrop}
-      arePiecesDraggable={!game.isGameOver() && !aiTurn}
-      boardWidth={720}
-    />
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        maxHeight: '100vh',
+        maxWidth: '99vw',
+        padding: '8px'
+      }}
+    >
+      <div style={{ pointerEvents: gameStarted ? 'auto' : 'none' }}>
+        <Chessboard
+          position={game.fen()}
+          onPieceDrop={onDrop}
+          arePiecesDraggable={!game.isGameOver() && !aiTurn}
+          boardWidth={720}
+          boardOrientation={gameMode === 'human_vs_ai' && player.color === 'black' ? 'black' : 'white'}
+        />
+      </div>
+
+      <div style={{ flexGrow: 1, marginLeft: '22px' }}>
+        <CustomTab
+          title1={'AI vs AI'}
+          title2={'Human vs AI'}
+          setTurn={setAiTurn}
+          onClickTitle1={() => {
+            setGameMode('ai_vs_ai')
+          }}
+          onClickTitle2={() => {
+            setGameMode('human_vs_ai')
+          }}
+        />
+      </div>
+    </div>
   )
 }
 
