@@ -1,10 +1,11 @@
-import CustomTab from '@myriad-chess/components/CustomTab'
 import { useGameState } from '@myriad-chess/components/GameStateProvider'
+import InGameDisplay from '@myriad-chess/components/InGameDisplay'
+import PreGameDisplay from '@myriad-chess/components/PreGameDisplay'
 import { RANDOM_AI_URL } from '@myriad-chess/constants'
-import { ApiResponse, Outcome, Reason, ReasonString, Winner } from '@myriad-chess/types/api'
-import { Chess, PieceSymbol, Square } from 'chess.js'
+import { ApiResponse, Reason, ReasonString, Winner } from '@myriad-chess/types/api'
+import { PieceSymbol, Square } from 'chess.js'
 import { cloneDeep } from 'lodash'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Chessboard } from 'react-chessboard'
 
 // Move object with only the necessary properties for game.move()
@@ -15,16 +16,22 @@ interface ShortMove {
 }
 
 const Home = () => {
-  // game state
-  const [game, setGame] = useState(new Chess())
-  // whether it's the AI's turn
-  const [aiTurn, setAiTurn] = useState(false)
-  // whether it's the white's turn
-  const [wTurn, setWTurn] = useState(true)
-  // outcome of the game
-  const [outcome, setOutcome] = useState<Outcome | null>(null)
-  // game mode and startState
-  const { gameMode, setGameMode, gameStarted, Ai1, Ai2, player } = useGameState()
+  const {
+    game,
+    setGame,
+    aiTurn,
+    setAiTurn,
+    wTurn,
+    setWTurn,
+    outcome,
+    setOutcome,
+    gameMode,
+    setGameMode,
+    gameStarted,
+    Ai1,
+    Ai2,
+    player
+  } = useGameState()
 
   const printOutcome = (reason: Reason, winner: Winner) => {
     if (reason === Reason.CHECKMATE) {
@@ -53,7 +60,7 @@ const Home = () => {
         return false
       }
     },
-    [aiTurn, game]
+    [aiTurn, game, setGame, setAiTurn]
   )
 
   // make a random move from the list of possible moves
@@ -74,7 +81,6 @@ const Home = () => {
         if (outcome) {
           setOutcome(outcome)
           printOutcome(outcome.termination, outcome.winner)
-          return
         } else if (move) {
           setWTurn(!wTurn)
           makeAMove(move)
@@ -85,7 +91,7 @@ const Home = () => {
         console.log(error)
       }
     },
-    [game, gameMode, makeAMove, wTurn]
+    [game, gameMode, makeAMove, wTurn, setWTurn, setAiTurn, setOutcome]
   )
 
   // make the AI move if it's the AI's turn and the game is not over (outcome is not null)
@@ -104,7 +110,7 @@ const Home = () => {
     } else if (gameMode === 'ai_vs_ai' || (gameMode === 'human_vs_ai' && aiTurn)) {
       aiMove(URL).catch(console.error)
     }
-  }, [game, aiMove, aiTurn, outcome, gameMode, wTurn, Ai2.color, Ai2.url, Ai1.url])
+  }, [game, aiMove, aiTurn, outcome, gameMode, wTurn, Ai2.color, Ai2.url, Ai1.url, gameStarted])
 
   // make the user's move when a piece is dropped
   const onDrop = (sourceSquare: Square, targetSquare: Square) => {
@@ -137,17 +143,21 @@ const Home = () => {
       </div>
 
       <div style={{ flexGrow: 1, marginLeft: '22px' }}>
-        <CustomTab
-          title1={'AI vs AI'}
-          title2={'Human vs AI'}
-          setTurn={setAiTurn}
-          onClickTitle1={() => {
-            setGameMode('ai_vs_ai')
-          }}
-          onClickTitle2={() => {
-            setGameMode('human_vs_ai')
-          }}
-        />
+        {!gameStarted ? (
+          <PreGameDisplay
+            title1={'AI vs AI'}
+            title2={'Human vs AI'}
+            setTurn={setAiTurn}
+            onClickTitle1={() => {
+              setGameMode('ai_vs_ai')
+            }}
+            onClickTitle2={() => {
+              setGameMode('human_vs_ai')
+            }}
+          />
+        ) : (
+          <InGameDisplay />
+        )}
       </div>
     </div>
   )
